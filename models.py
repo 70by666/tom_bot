@@ -1,7 +1,7 @@
 import os
 
 from dotenv import find_dotenv, load_dotenv
-from sqlalchemy import BigInteger, Boolean, Column, String, create_engine
+from sqlalchemy import BigInteger, Column, String, create_engine
 from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 
 load_dotenv(find_dotenv())

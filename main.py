@@ -2,13 +2,13 @@
 
 import openai
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import find_dotenv, load_dotenv
 
-from keyboards import kbs, kbn, kba
-from numbers_model import set_number, get_numbers
+from keyboards import kba, kbn, kbs
+from numbers_model import get_numbers, set_number
 
 load_dotenv(find_dotenv())
 

@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 
 from models import Numbers, session
-from system import fio_is_valid, number_is_valid
+from service import fio_is_valid, number_is_valid
 
 
 def set_number(from_user, data):
