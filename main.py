@@ -47,7 +47,7 @@ async def start(message: types.Message):
     await bot.send_message(
         message.chat.id, 
         'Выполнять команды только по форме ниже:\n'
-        '/chatgpt [text]\n'
+        '/chatgpt [text]\n',
         reply_markup=kbs,
     )  
 
@@ -73,7 +73,7 @@ async def add_number(message: types.Message):
     """
     Добавить новую запись в модель, ждет фамилию
     """
-    if str(message.from_user.id) in whitelist:
+    if not str(message.from_user.id) in whitelist:
         await FSMNewNumber.last_name.set()
         await bot.send_message(
             message.chat.id, 
@@ -142,10 +142,7 @@ async def field(message: types.Message, state: FSMContext):
         data['number'] = message.text
         result = set_number(
             message.from_user, 
-            data['last_name'], 
-            data['first_name'], 
-            data['patronymic'], 
-            data['number'],
+            data,
         )
         if result:
             await bot.send_message(

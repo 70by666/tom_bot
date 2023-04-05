@@ -4,14 +4,14 @@ from models import Numbers, session
 from system import fio_is_valid, number_is_valid
 
 
-def set_number(from_user, last_name, first_name, patronymic, number):
-    fio = [last_name, first_name, patronymic]
-    if number_is_valid(number) and fio_is_valid(fio):
+def set_number(from_user, data):
+    fio = [data['last_name'], data['first_name'], data['patronymic']]
+    if number_is_valid(data['number']) and fio_is_valid(fio):
         number_obj = Numbers(
-            last_name=last_name,
-            first_name=first_name,
-            patronymic=patronymic,
-            number=number,
+            last_name=data['last_name'],
+            first_name=data['first_name'],
+            patronymic=data['patronymic'],
+            number=data['number'],
             who_contributed_id=int(from_user.id),
             who_contributed_name=from_user.full_name,
         )
