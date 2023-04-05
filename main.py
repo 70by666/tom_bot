@@ -4,22 +4,27 @@ import openai
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import find_dotenv, load_dotenv
 
-from keyboards import kb
-from models import Numbers
-from numbers_model import new_number
+from keyboards import kbs, kbn
+from numbers_model import set_number, get_numbers
 
 load_dotenv(find_dotenv())
 
 # config
 openai.api_key = str(os.getenv('CHATGPT_TOKEN'))
+storage = MemoryStorage()
 bot = Bot(str(os.getenv('BOT_TOKEN')))
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=storage)
 
 
 class FSMSearch(StatesGroup):
-    name = State()
+    field = State()
+    value = State()
+
+
+kr = types.ReplyKeyboardRemove()
 
 
 @dp.message_handler(commands=['start'])
@@ -29,10 +34,10 @@ async def start(message: types.Message):
     """
     await bot.send_message(
         message.chat.id, 
-        'Выполнять команды строго по форме ниже:\n'
+        'Выполнять команды только по форме ниже:\n'
         '/chatgpt [text]\n'
         '/addnumber [last_name] [first_name] [patronymic] [number]',
-        reply_markup=kb,
+        reply_markup=kbs,
     )  
 
 
@@ -40,15 +45,72 @@ async def start(message: types.Message):
 @dp.message_handler(commands=['addnumber'])
 async def add_number(message: types.Message):
     """
-    Добавить новую запись в базу
+    Добавить новую запись в модель
     """
-    result = new_number(message)
+    result = set_number(message)
     if result:
         await bot.send_message(message.chat.id, 'Данные внесены')
     else:
-        await bot.send_message(message.chat.id, 'Команда использована неверно')
+        await bot.send_message(message.chat.id, 'Команда использована неверно')     
+
+
+@dp.message_handler(state='*', commands="stop")
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        return None
+    await state.finish()
+    await message.reply("ok", reply_markup=kr)  
     
-    
+
+@dp.message_handler(commands=['number'], state=None)
+async def number(message: types.Message):
+    """
+    Запрос на поиск по одному из полей в моделе
+    """
+    await FSMSearch.field.set()
+    await bot.send_message(
+        message.chat.id, 
+        'По какому полю поиск?\nИспользовать только указанные кнопки\n'
+        'Фамилия Имя Отчество соответственно',
+        reply_markup=kbn,
+    )
+
+
+@dp.message_handler(state=FSMSearch.field)
+async def field(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['field'] = message.text
+        await FSMSearch.next()
+        await bot.send_message(
+            message.chat.id, 
+            'Кого ищем?', 
+            reply_markup=kr,
+        )
+
+
+@dp.message_handler(state=FSMSearch.value)
+async def value(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['value'] = message.text
+        response = get_numbers(data['field'], data['value'])
+        if response:
+            await bot.send_message(
+                message.chat.id, 
+                response,
+                reply_markup=kbs,
+            )
+        else:
+            await bot.send_message(
+                message.chat.id, 
+                'Записи не найдены или произошла ошибка, '
+                'проверьте введенные данные',
+                reply_markup=kbs,
+            )
+            
+    await state.finish()
+
+
 @dp.message_handler(commands=['chatgpt'])
 async def chatgpt(message: types.Message):
     """
@@ -79,8 +141,11 @@ async def send(message: types.Message):
 
 @dp.message_handler(commands=['убратькнопки'])
 async def delkb(message: types.Message):
-    mk = types.ReplyKeyboardRemove()
-    await bot.send_message(message.chat.id, 'ok', reply_markup=mk)
+    """
+    Удаляет кнопки
+    """
+    kr = types.ReplyKeyboardRemove()
+    await bot.send_message(message.chat.id, 'ok', reply_markup=kr)
 
 
 if __name__ == '__main__':

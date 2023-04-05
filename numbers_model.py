@@ -4,7 +4,7 @@ from models import Numbers, session
 from system import fio_is_valid, number_is_valid
 
 
-def new_number(message):
+def set_number(message):        
     data = message.text.split()[1:]
     if len(data) == 4:
         if number_is_valid(data[3]) and fio_is_valid(data[0:3]):
@@ -24,3 +24,16 @@ def new_number(message):
                 session.rollback()
 
     return False
+
+
+def get_numbers(field, value):
+    if field == 'last_name':
+        response = session.query(Numbers).filter(Numbers.last_name == value).all()
+    elif field == 'first_name':
+        response = session.query(Numbers).filter(Numbers.first_name == value).all()
+    elif field == 'patronymic':
+        response = session.query(Numbers).filter(Numbers.patronymic == value).all()
+    else:
+        return False
+    
+    return '\n'.join([f'{i.last_name} {i.first_name} {i.patronymic} { i.number}' for i in response])
