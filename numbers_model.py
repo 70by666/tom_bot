@@ -35,4 +35,37 @@ def get_numbers(field, value):
     else:
         return False
     
+    if not response:
+        return False
+    
     return '\n'.join([f'{i.id} {i.last_name} {i.first_name} {i.patronymic} { i.number}' for i in response])
+
+
+def get_number(number_id):
+    number = session.query(Numbers).get(number_id)
+    if not number:
+        return False
+    
+    return number
+
+
+def edit_number(action, num_id, value=None):
+    number = session.query(Numbers).get(num_id)
+    if action == 'last_name':
+        number.last_name = value
+    elif action == 'first_name':
+        number.first_name = value
+    elif action == 'patronymic':
+        number.patronymic = value
+    elif action == 'number':
+        number.number = value
+    elif action == 'delete':
+        session.delete(number)
+        
+    try:
+        session.commit()
+        return True
+    except IntegrityError:
+        session.rollback()
+        
+    return False

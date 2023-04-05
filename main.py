@@ -5,10 +5,12 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.callback_data import CallbackData
 from dotenv import find_dotenv, load_dotenv
 
 from keyboards import kba, kbn, kbs
-from numbers_model import get_numbers, set_number
+from numbers_model import edit_number, get_number, get_numbers, set_number
 
 load_dotenv(find_dotenv())
 
@@ -23,6 +25,8 @@ dp = Dispatcher(bot, storage=storage)
 
 whitelist = str(os.getenv('WHITELIST')).split()
 
+cd = CallbackData('dun_w', 'action', 'num_id')
+
 
 class FSMSearch(StatesGroup):
     field = State()
@@ -34,8 +38,12 @@ class FSMNewNumber(StatesGroup):
     first_name = State()
     patronymic = State()
     number = State()
-    
 
+
+class FSMEdit(StatesGroup):
+    value = State()
+    
+    
 kr = types.ReplyKeyboardRemove()
 
 
@@ -160,10 +168,10 @@ async def field(message: types.Message, state: FSMContext):
     await state.finish()   
     
 
-# get_number
+# get_numbers
 
 @dp.message_handler(commands=['number'], state=None)
-async def get_number(message: types.Message):
+async def get_numbers_from_fio(message: types.Message):
     """
     Запрос на поиск по одному из полей в моделе
     """
@@ -187,7 +195,7 @@ async def field(message: types.Message, state: FSMContext):
         await bot.send_message(
             message.chat.id, 
             'Кого ищем?', 
-            reply_markup=kr,
+            reply_markup=kba,
         )
 
 
@@ -234,6 +242,123 @@ async def chatgpt(message: types.Message):
     )
     await bot.send_message(message.chat.id, response['choices'][0]['text'])
 
+
+# edit_number
+@dp.message_handler(commands=['getnumber'])
+async def get_number_from_id(message: types.Message):
+    """
+    Получить запись по id
+    """
+    if not str(message.from_user.id) in whitelist:
+        try:
+            response = get_number(message.text.split(' ')[1])
+            if response:
+                kbi = InlineKeyboardMarkup(row_width=2).add(
+                    InlineKeyboardButton('Фамилию', callback_data=cd.new(
+                        action='last_name',
+                        num_id=response.id,
+                    )),
+                    InlineKeyboardButton('Имя', callback_data=cd.new(
+                        action='first_name',
+                        num_id=response.id,
+                    )),
+                    InlineKeyboardButton('Отчество', callback_data=cd.new(
+                        action='patronymic',
+                        num_id=response.id,
+                    )),
+                    InlineKeyboardButton('Номер', callback_data=cd.new(
+                        action='number',
+                        num_id=response.id,
+                    )),
+                    InlineKeyboardButton('Удалить', callback_data=cd.new(
+                        action='delete',
+                        num_id=response.id,
+                    )),
+                )
+                text_message = '{} {} {} {} {}\n\nИзменить:'.format(
+                    response.id,
+                    response.last_name,
+                    response.first_name,
+                    response.patronymic,
+                    response.number,
+                )
+                await bot.send_message(
+                    message.chat.id, 
+                    text_message,
+                    reply_markup=kbi,
+                )
+            else:
+                await bot.send_message(
+                    message.chat.id, 
+                    'Запись с таким ID не найдена',
+                    reply_markup=kbs,
+                )
+        except IndexError:
+            await bot.send_message(
+                message.chat.id, 
+                'Вы не указали ID',
+                reply_markup=kbs,
+            )
+    else:
+        await bot.send_message(
+            message.chat.id, 
+            'Нет доступа', 
+            reply_markup=kbs,
+        )
+
+
+@dp.callback_query_handler(cd.filter(), state=None)
+async def button_press(call: types.CallbackQuery, callback_data: dict):
+    global action
+    global num_id
+    action = callback_data.get('action')
+    num_id = callback_data.get('num_id')
+    if not action == 'delete':
+        await FSMEdit.value.set()
+        await call.bot.send_message(
+            call.message.chat.id, 
+            'Введите новое значение',
+            reply_markup=kba,
+        )
+    else:
+        result = edit_number(action, num_id)
+        if result:
+            await bot.send_message(
+                call.message.chat.id, 
+                f'Номер удален',
+                reply_markup=kbs,
+            )
+        else:
+            await bot.send_message(
+                call.message.chat.id, 
+                'Команда использована неверно',
+                reply_markup=kbs,
+            )
+    
+
+@dp.message_handler(state=FSMEdit.value)
+async def edit_value(message: types.Message, state: FSMContext):
+    """
+    Записывается значение и изменяется запись
+    """
+    async with state.proxy() as data:
+        data['value'] = message.text
+        result = edit_number(action, num_id, data['value'])
+        if result:
+            await bot.send_message(
+                message.chat.id, 
+                f'Данные изменены',
+                reply_markup=kbs,
+            )
+        else:
+            await bot.send_message(
+                message.chat.id, 
+                'Команда использована неверно',
+                reply_markup=kbs,
+            )
+        
+    await state.finish()
+    
 
 # other
 
