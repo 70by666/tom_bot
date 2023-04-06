@@ -3,6 +3,10 @@
 import openai
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.callback_data import CallbackData
 from dotenv import find_dotenv, load_dotenv
 
 
@@ -31,6 +35,23 @@ async def start(message: types.Message):
         'Выполнять команды только по форме ниже:\n'
         '/chatgpt [text]\n'
     )  
+    
+
+@dp.message_handler(commands=['chatgpt'])
+async def chatgpt(message: types.Message):
+    """
+    API open ai chatgpt
+    """
+    response = openai.Completion.create(
+        model='text-davinci-003',
+        prompt=message.text,
+        temperature=0.9,
+        max_tokens=2000,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.6,
+    )
+    await bot.send_message(message.chat.id, response['choices'][0]['text'])
 
 
 @dp.message_handler(commands=['id'])
