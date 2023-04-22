@@ -5,5 +5,6 @@ kr = types.ReplyKeyboardRemove()
 
 kb_start = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
 kb_start.add(
-    KeyboardButton('/start'), KeyboardButton('/removekb')
+    KeyboardButton('/start'), KeyboardButton('/auth'), 
+    KeyboardButton('/removekb')
 )

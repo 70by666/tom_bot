@@ -4,8 +4,7 @@ import openai
 from aiogram import Dispatcher, types
 
 from keyboards.other import kb_start, kr
-from settings import bot, OPEN_AI_TOKEN
-from services.api import get_user_from_id
+from settings import OPEN_AI_TOKEN, bot
 
 openai.api_key = OPEN_AI_TOKEN
 
@@ -29,25 +28,14 @@ async def start(message: types.Message):
     """
     Список команд и кнопки
     """
-    
-    result = get_user_from_id(message.from_user.id)
-    if result:
-        message_text = (
-            f'Вы авторизованы как {result["username"]}'
-            ''
-            '\n\n\n'
-            '/chatgpt [text]\n'
-        )
-    else:
-        message_text = (
-            'Вы не авторизованы\n'
-            '/chatgpt [text]\n'
-        )
-        
     await bot.send_message(
         message.chat.id, 
-        message_text
-    )  
+        'Чтобы авторизоваться введите /auth '
+        'или нажмите на соотвествующую кнопку'
+        '\n\n\n'
+        '/chatgpt [text]\n',
+        reply_markup=kb_start,
+    )
     
 
 async def chatgpt(message: types.Message):

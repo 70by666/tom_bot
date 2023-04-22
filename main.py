@@ -1,9 +1,9 @@
 ﻿from aiogram import executor
 
-from handlers import users, other
+from handlers import other, users
 from settings import dp
 
-# users.register_handlers_users(dp)
+users.register_handlers_users(dp)
 other.register_handlers_other(dp)
     
 if __name__ == '__main__':

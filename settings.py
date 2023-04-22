@@ -3,8 +3,8 @@ import os
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import Dispatcher
+from aiogram.utils.callback_data import CallbackData
 from dotenv import find_dotenv, load_dotenv
-import openai
 
 # config
 
@@ -22,3 +22,5 @@ OPEN_AI_TOKEN = str(os.getenv('CHATGPT_TOKEN'))
 
 SUPERUSER_API_LOGIN = str(os.getenv('SUPERUSER_API_LOGIN'))
 SUPERUSER_API_PASSWORD = str(os.getenv('SUPERUSER_API_PASSWORD'))
+
+cd_start = CallbackData('action')
