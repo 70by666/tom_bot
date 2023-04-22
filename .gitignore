@@ -1,4 +1,6 @@
+.git
 venv
 setup.cfg
 .env
 __pycache__
+.vscode
