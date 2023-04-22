@@ -15,8 +15,7 @@ async def auth(message: types.Message):
             message.chat.id, 
             f'Вы авторизованы как {result["username"]}'
             ''
-            '\n\n\n'
-            '/chatgpt [text]\n',
+            '\n\n\n',
             reply_markup=kb_start,
         )  
     else: 
@@ -24,19 +23,28 @@ async def auth(message: types.Message):
             message.chat.id, 
             'Вы не авторизованы, чтобы получить ссылку для авторизации, '
             'нажмите на ссылку'
-            '\n\n\n'
-            '/chatgpt [text]\n',
+            '\n\n\n',
             reply_markup=kb_start_inline,
         )  
 
 
 async def get_url(callback: types.CallbackQuery):
     user_id = callback.from_user.id
-    await callback.bot.edit_message_text(
-        chat_id=user_id,
-        message_id=msg_no_auth.message_id,
-        text=get_url_for_auth(user_id),
-    )
+    try:
+        await callback.bot.edit_message_text(
+            chat_id=user_id,
+            message_id=msg_no_auth.message_id,
+            text=f'Чтобы привязать Телеграм к аккаунту на сайте, '
+            'нужно быть авторизованным на сайте\n'
+            f'{get_url_for_auth(user_id)}',
+        )
+    except NameError:
+        await callback.bot.send_message(
+            user_id,
+            f'Чтобы привязать Телеграм к аккаунту на сайте, '
+            'нужно быть авторизованным на сайте\n'
+            f'{get_url_for_auth(user_id)}',
+        )
 
 
 def register_handlers_users(dp: Dispatcher):

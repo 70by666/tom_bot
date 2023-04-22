@@ -32,6 +32,6 @@ def get_url_for_auth(user_id):
     })
     result = response.json()
     if result:
-        return result
+        return result['url_auth']
     else:
         return False
