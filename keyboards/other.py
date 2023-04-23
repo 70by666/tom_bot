@@ -11,5 +11,6 @@ kb_start_no_auth.add(
 
 kb_start = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
 kb_start.add(
-    KeyboardButton('/start'), KeyboardButton('/removekb'),
+    KeyboardButton('/start'), KeyboardButton('/profile'),
+    KeyboardButton('/removekb'),
 )

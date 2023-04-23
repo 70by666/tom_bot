@@ -25,4 +25,6 @@ SUPERUSER_API_PASSWORD = str(os.getenv('SUPERUSER_API_PASSWORD'))
 
 cd_start = CallbackData('action')
 
+cd_start_2 = CallbackData('action', 'num_id')
+
 DOMAIN_NAME = str(os.getenv('DOMAIN_NAME'))

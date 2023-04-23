@@ -4,19 +4,26 @@ from settings import SUPERUSER_API_LOGIN, SUPERUSER_API_PASSWORD, DOMAIN_NAME
 
 
 def get_token():
-    url = f'{DOMAIN_NAME}/auth/token/login/'
+    url = f'{DOMAIN_NAME}/auth/token/login'
     response = requests.post(url=url, json={
         'username': SUPERUSER_API_LOGIN,
         'password': SUPERUSER_API_PASSWORD,
     })
+    result = response.json()
+    if result.get('detail'):
+        return False, result.get('detail')
     
-    return response.json()['auth_token']
+    return result.get('auth_token')
 
 
 def get_user_from_id(user_id):
+    token = get_token()
+    if not token[0]:
+        return False
+    
     url = f'{DOMAIN_NAME}/api/v1/user/{user_id}/' 
     response = requests.get(url=url, headers={
-        'Authorization': f'Token {get_token()}',
+        'Authorization': f'Token {token}',
     })
     result = response.json()
     if result['username'] == '':
